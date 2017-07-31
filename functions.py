@@ -1,45 +1,11 @@
-import numpy as np
-import pandas as pd
-import datetime
-from matplotlib import pyplot as plt
-import random
-
-random.seed(17)
-train = pd.read_csv("/Users/Kronos/Desktop/HE ML3/Data/train.csv")
-train = train.head(10000)
-# train.dtypes
-# len(np.unique(train[""]))
-
-# records : 12137810
-# category : 271
-# site : 1431688
-# offerid : 847510
-# merchant : 697
-# countrycode : 6
-
+# One hot encoding for categorical variables with low cardinality
 def one_hot(df,cols):
 	for each in cols:
 		dummies = pd.get_dummies(df[each], prefix=each, drop_first=True)
 		df = pd.concat([df, dummies], axis=1)
 	return df
 
-ct = pd.crosstab(index=df[each],columns='count')
-ct.sort_values(by=['col_0'],ascending=False)
-
-cdcols = ['devid','browserid','countrycode']
-
-# Variable	Description
-# ID	Unique ID
-# datetime	timestamp
-# siteid	website id
-# offerid	offer id (commission based offers)
-# category	offer category
-# merchant	seller ID
-# countrycode	country where affiliates reach is present
-# browserid	browser used
-# devid	device used
-# click	target variable
-
+# Leave one out encoding for categorical variables with high cardinality (train)
 def leave_oneout_enc_train(df,colname,target):
 	noise_mean = 0
 	noise_std = np.std(df[target])
@@ -53,6 +19,7 @@ def leave_oneout_enc_train(df,colname,target):
 	df = df.reset_index()
 	return df
 
+# Leave one out encoding for categorical variables with high cardinality (test)
 def leave_oneout_enc_test(df,colname,target):
 	cfq = pd.crosstab(index=df[colname],columns='cc_' + colname)
 	srr = pd.pivot_table(df,values=target,index=[colname],aggfunc=np.sum)
@@ -64,7 +31,7 @@ def leave_oneout_enc_test(df,colname,target):
 	df = df.reset_index()
 	return df
 
-# Distribution of variables by response
+# Response distribution for categorical variables
 def res_dist(df,colname,target,idval):
 	cfq = pd.crosstab(index=df[colname],columns='count')
 	freq_cutoff = np.mean(cfq['count'])
@@ -84,18 +51,3 @@ def res_dist(df,colname,target,idval):
 	except:
 		lw_rr_list = []
 	return [hh_rr_list,lw_rr_list]
-
-df['devid'] = df['devid'].fillna('')
-df['browserid'] = df['browserid'].fillna('')
-df['datetime'] =  pd.to_datetime(df['datetime'])
-df['dayofthweek'] = df['datetime'].dt.dayofweek
-df['timeofday'] = df['datetime'].dt.time
-
-df.loc[df['browserid'].isin(['IE','Internet Explorer']),'browserid'] = 'InternetExplorer'
-df.loc[df['browserid']=='Mozilla Firefox','browserid'] = 'Firefox'
-df.loc[df['browserid']=='Google Chrome','browserid'] = 'Chrome'
-
-# array(['', 'Chrome', 'Edge', 'Firefox', 'Google Chrome', 'IE',
-#        'Internet Explorer', 'InternetExplorer', 'Mozilla',
-#        'Mozilla Firefox', 'Opera', 'Safari'], dtype=object)
-# # Average/Variance
