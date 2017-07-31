@@ -95,7 +95,7 @@ df.loc[df['browserid'].isin(['IE','Internet Explorer']),'browserid'] = 'Internet
 df.loc[df['browserid']=='Mozilla Firefox','browserid'] = 'Firefox'
 df.loc[df['browserid']=='Google Chrome','browserid'] = 'Chrome'
 
-# array(['', 'Chrome', 'Edge', 'Firefox', 'Google Chrome', 'IE',
+# #array(['', 'Chrome', 'Edge', 'Firefox', 'Google Chrome', 'IE',
 #        'Internet Explorer', 'InternetExplorer', 'Mozilla',
 #        'Mozilla Firefox', 'Opera', 'Safari'], dtype=object)
 # # Average/Variance
