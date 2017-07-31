@@ -6,29 +6,45 @@ def one_hot(df,cols):
 	return df
 
 # Leave one out encoding for categorical variables with high cardinality (train)
-def leave_oneout_enc_train(df,colname,target):
-	noise_mean = 0
-	noise_std = np.std(df[target])
-	cfq = pd.crosstab(index=df[colname],columns='cc_' + colname)
-	srr = pd.pivot_table(df,values=target,index=[colname],aggfunc=np.sum)
-	srr.columns = ['sum_rr']
-	df = df.set_index(colname)
-	df = df.join([cfq,srr],how='left')
-	df['looe_' + colname] = (df['sum_rr'] - df[target])/(df['cc_' + colname] - 1) + (np.random.normal(loc=noise_mean,scale=noise_std,size=(df.shape[0]))/100).tolist()
-	df = df.drop(['sum_rr'],axis=1)
-	df = df.reset_index()
+def leave_oneout_enc_train(df,colnames,target):
+	for colname in colnames:
+		noise_mean = 0
+		noise_std = np.std(df[target])
+		cfq = pd.crosstab(index=df[colname],columns='cc_' + colname)
+		srr = pd.pivot_table(df,values=target,index=[colname],aggfunc=np.sum)
+		srr.columns = ['sum_rr']
+		df = df.set_index(colname)
+		df = df.join([cfq,srr],how='left')
+		df['looe_' + colname] = (df['sum_rr'] - df[target])/(df['cc_' + colname] - 1) + (np.random.normal(loc=noise_mean,scale=noise_std,size=(df.shape[0]))/100).tolist()
+		df = df.drop(['sum_rr'],axis=1)
+		df = df.reset_index()
 	return df
 
 # Leave one out encoding for categorical variables with high cardinality (test)
-def leave_oneout_enc_test(df,colname,target):
-	cfq = pd.crosstab(index=df[colname],columns='cc_' + colname)
-	srr = pd.pivot_table(df,values=target,index=[colname],aggfunc=np.sum)
-	srr.columns = ['sum_rr']
-	df = df.set_index(colname)
-	df = df.join([cfq,srr],how='left')
-	df['looe_' + colname] = (df['sum_rr']/df['cc_' + colname])
-	df = df.drop(['sum_rr'],axis=1)
-	df = df.reset_index()
+def leave_oneout_enc_test(df,colnames,target):
+	for colname in colnames:
+		cfq = pd.crosstab(index=df[colname],columns='cc_' + colname)
+		srr = pd.pivot_table(df,values=target,index=[colname],aggfunc=np.sum)
+		srr.columns = ['sum_rr']
+		df = df.set_index(colname)
+		df = df.join([cfq,srr],how='left')
+		df['looe_' + colname] = (df['sum_rr']/df['cc_' + colname])
+		df = df.drop(['sum_rr'],axis=1)
+		df = df.reset_index()
+	return df
+
+# Data pre-processing
+def data_prep(df):
+	df['devid'] = df['devid'].fillna('')
+	df['browserid'] = df['browserid'].fillna('')
+	df.loc[df['browserid'].isin(['IE','Internet Explorer']),'browserid'] = 'InternetExplorer'
+	df.loc[df['browserid']=='Mozilla Firefox','browserid'] = 'Firefox'
+	df.loc[df['browserid']=='Google Chrome','browserid'] = 'Chrome'
+	df['datetime'] =  pd.to_datetime(df['datetime'])
+	df['dayofthweek'] = df['datetime'].dt.dayofweek
+	df['timeofday'] = df['datetime'].dt.time
+	df['timeofday'] = df['timeofday'].astype('str')
+	df['timeofday'] = df['timeofday'].apply(lambda x: (int(x.split(':')[0])*3600) + (int(x.split(':')[1])*60) + (int(x.split(':')[2])))
 	return df
 
 # Response distribution for categorical variables

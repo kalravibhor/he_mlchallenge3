@@ -75,12 +75,13 @@ def res_dist(df,colname,target,idval):
 	table.columns = ['negative','positive','all']
 	table['positive_response_rate'] = table['positive']/table['all']
 	table = table[table['all'] > freq_cutoff]
+	table = table.reset_index()
 	try:
-		hh_rr_list = table[table['positive_response_rate']>=res_cutoff_high][colname]
+		hh_rr_list = (table[table['positive_response_rate']>=res_cutoff_high][colname]).tolist()
 	except:
 		hh_rr_list = []
 	try:
-		lw_rr_list = table[table['positive_response_rate']<=res_cutoff_low][colname]
+		lw_rr_list = (table[table['positive_response_rate']<=res_cutoff_low][colname]).tolist()
 	except:
 		lw_rr_list = []
 	return [hh_rr_list,lw_rr_list]
@@ -90,6 +91,8 @@ df['browserid'] = df['browserid'].fillna('')
 df['datetime'] =  pd.to_datetime(df['datetime'])
 df['dayofthweek'] = df['datetime'].dt.dayofweek
 df['timeofday'] = df['datetime'].dt.time
+df['timeofday'] = df['timeofday'].astype('str')
+df['timeofday'] = df['timeofday'].apply(lambda x: (int(x.split(':')[0])*3600) + (int(x.split(':')[1])*60) + (int(x.split(':')[2]))) 
 
 df.loc[df['browserid'].isin(['IE','Internet Explorer']),'browserid'] = 'InternetExplorer'
 df.loc[df['browserid']=='Mozilla Firefox','browserid'] = 'Firefox'
