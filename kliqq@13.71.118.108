@@ -98,8 +98,6 @@ df.loc[df['browserid'].isin(['IE','Internet Explorer']),'browserid'] = 'Internet
 df.loc[df['browserid']=='Mozilla Firefox','browserid'] = 'Firefox'
 df.loc[df['browserid']=='Google Chrome','browserid'] = 'Chrome'
 
-train.isnull().sum(axis=0)/train.shape[0]
-
 # array(['', 'Chrome', 'Edge', 'Firefox', 'Google Chrome', 'IE',
 #        'Internet Explorer', 'InternetExplorer', 'Mozilla',
 #        'Mozilla Firefox', 'Opera', 'Safari'], dtype=object)

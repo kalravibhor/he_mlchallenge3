@@ -14,29 +14,30 @@ def leave_oneout_enc_train(df,colnames,target):
 		srr = pd.pivot_table(df,values=target,index=[colname],aggfunc=np.sum)
 		srr.columns = ['sum_rr']
 		df = df.set_index(colname)
-		df = df.join([cfq,srr],how='left')
+		df = df.merge(cfq.merge(srr,how='left',left_index=True,right_index=True),how='left',left_index=True,right_index=True)
 		df['looe_' + colname] = (df['sum_rr'] - df[target])/(df['cc_' + colname] - 1) + (np.random.normal(loc=noise_mean,scale=noise_std,size=(df.shape[0]))/100).tolist()
 		df = df.drop(['sum_rr'],axis=1)
 		df = df.reset_index()
 	return df
 
 # Leave one out encoding for categorical variables with high cardinality (test)
-def leave_oneout_enc_test(df,colnames,target):
+def leave_oneout_enc_test(df_test,df_train,colnames,target):
 	for colname in colnames:
-		cfq = pd.crosstab(index=df[colname],columns='cc_' + colname)
-		srr = pd.pivot_table(df,values=target,index=[colname],aggfunc=np.sum)
+		cfq = pd.crosstab(index=df_train[colname],columns='cc_' + colname)
+		srr = pd.pivot_table(df_train,values=target,index=[colname],aggfunc=np.sum)
 		srr.columns = ['sum_rr']
-		df = df.set_index(colname)
-		df = df.join([cfq,srr],how='left')
-		df['looe_' + colname] = (df['sum_rr']/df['cc_' + colname])
-		df = df.drop(['sum_rr'],axis=1)
-		df = df.reset_index()
-	return df
+		df_test = df_test.set_index(colname)
+		df_test = df_test.merge(cfq.merge(srr,how='left',left_index=True,right_index=True),how='left',left_index=True,right_index=True)
+		df_test['looe_' + colname] = (df_test['sum_rr']/df_test['cc_' + colname])
+		df_test = df_test.drop(['sum_rr'],axis=1)
+		df_test = df_test.reset_index()
+	return df_test
 
 # Data pre-processing
 def data_prep(df):
 	df['devid'] = df['devid'].fillna('')
 	df['browserid'] = df['browserid'].fillna('')
+	df['siteid'] = df['devid'].fillna(0)
 	df.loc[df['browserid'].isin(['IE','Internet Explorer']),'browserid'] = 'InternetExplorer'
 	df.loc[df['browserid']=='Mozilla Firefox','browserid'] = 'Firefox'
 	df.loc[df['browserid']=='Google Chrome','browserid'] = 'Chrome'
@@ -67,3 +68,13 @@ def res_dist(df,colname,target,idval):
 	except:
 		lw_rr_list = []
 	return [hh_rr_list,lw_rr_list]
+
+# Model fitting and summary
+def modelfit(alg,dtrain,predictors,useTrainCV=True,cv_folds=5,early_stopping_rounds=50):
+    if useTrainCV:
+        xgb_param = alg.get_xgb_params()
+        xgtrain = xgb.DMatrix(dtrain[predictors].values, label=dtrain[target].values)
+        cvresult = xgb.cv(xgb_param, xgtrain, num_boost_round=alg.get_params()['n_estimators'], nfold=cv_folds,metrics='auc', early_stopping_rounds=early_stopping_rounds)
+        alg.set_params(n_estimators=cvresult.shape[0])
+    alg.fit(dtrain[predictors], dtrain[target],eval_metric='auc')
+    return alg
