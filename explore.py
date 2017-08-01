@@ -30,7 +30,7 @@ cdcols = ['devid','browserid','countrycode']
 
 # Variable	Description
 # ID	Unique ID
-# datetime	timestamp
+# datetime	timestamp #the time when ad started displaying on affiliate's website.
 # siteid	website id
 # offerid	offer id (commission based offers)
 # category	offer category
@@ -75,13 +75,12 @@ def res_dist(df,colname,target,idval):
 	table.columns = ['negative','positive','all']
 	table['positive_response_rate'] = table['positive']/table['all']
 	table = table[table['all'] > freq_cutoff]
-	table = table.reset_index()
 	try:
-		hh_rr_list = (table[table['positive_response_rate']>=res_cutoff_high][colname]).tolist()
+		hh_rr_list = table[table['positive_response_rate']>=res_cutoff_high][colname]
 	except:
 		hh_rr_list = []
 	try:
-		lw_rr_list = (table[table['positive_response_rate']<=res_cutoff_low][colname]).tolist()
+		lw_rr_list = table[table['positive_response_rate']<=res_cutoff_low][colname]
 	except:
 		lw_rr_list = []
 	return [hh_rr_list,lw_rr_list]
@@ -91,16 +90,7 @@ df['browserid'] = df['browserid'].fillna('')
 df['datetime'] =  pd.to_datetime(df['datetime'])
 df['dayofthweek'] = df['datetime'].dt.dayofweek
 df['timeofday'] = df['datetime'].dt.time
-df['timeofday'] = df['timeofday'].astype('str')
-df['timeofday'] = df['timeofday'].apply(lambda x: (int(x.split(':')[0])*3600) + (int(x.split(':')[1])*60) + (int(x.split(':')[2]))) 
 
 df.loc[df['browserid'].isin(['IE','Internet Explorer']),'browserid'] = 'InternetExplorer'
 df.loc[df['browserid']=='Mozilla Firefox','browserid'] = 'Firefox'
 df.loc[df['browserid']=='Google Chrome','browserid'] = 'Chrome'
-
-train.isnull().sum(axis=0)/train.shape[0]
-
-# array(['', 'Chrome', 'Edge', 'Firefox', 'Google Chrome', 'IE',
-#        'Internet Explorer', 'InternetExplorer', 'Mozilla',
-#        'Mozilla Firefox', 'Opera', 'Safari'], dtype=object)
-# # Average/Variance

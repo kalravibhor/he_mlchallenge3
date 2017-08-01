@@ -1,0 +1,1 @@
+train.isnull().sum(axis=0)/train.shape[0]
