@@ -1,1 +1,7 @@
 train.isnull().sum(axis=0)/train.shape[0]
+
+pred = model.predict_proba(test[cols_to_use])[:,1]
+
+###submission, where pred is the output prediction on the test dataset
+sub = pd.DataFrame({'ID':test['ID'],'click':pred})
+sub.to_csv('cb_sub1.csv',index=False)
