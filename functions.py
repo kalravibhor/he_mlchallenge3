@@ -1,3 +1,8 @@
+import numpy as np
+import pandas as pd
+import datetime
+import xgboost as xgb
+
 # One hot encoding for categorical variables with low cardinality
 def one_hot(df,cols):
 	for each in cols:
@@ -39,7 +44,7 @@ def data_prep(df):
 	df['browserid'] = df['browserid'].fillna('')
 	df['siteid'] = df['devid'].fillna(0)
 	df.loc[df['browserid'].isin(['IE','Internet Explorer']),'browserid'] = 'InternetExplorer'
-	df.loc[df['browserid']=='Mozilla Firefox','browserid'] = 'Firefox'
+	df.loc[df['browserid'].isin(['Mozilla','Mozilla Firefox']),'browserid'] = 'Firefox'
 	df.loc[df['browserid']=='Google Chrome','browserid'] = 'Chrome'
 	df['datetime'] =  pd.to_datetime(df['datetime'])
 	df['dayofthweek'] = df['datetime'].dt.dayofweek
@@ -70,11 +75,10 @@ def res_dist(df,colname,target,idval):
 	return [hh_rr_list,lw_rr_list]
 
 # Model fitting and summary
-def modelfit(alg,dtrain,predictors,useTrainCV=True,cv_folds=5,early_stopping_rounds=50):
-    if useTrainCV:
-        xgb_param = alg.get_xgb_params()
-        xgtrain = xgb.DMatrix(dtrain[predictors].values, label=dtrain[target].values)
-        cvresult = xgb.cv(xgb_param, xgtrain, num_boost_round=alg.get_params()['n_estimators'], nfold=cv_folds,metrics='auc', early_stopping_rounds=early_stopping_rounds)
-        alg.set_params(n_estimators=cvresult.shape[0])
-    alg.fit(dtrain[predictors], dtrain[target],eval_metric='auc')
-    return alg
+def modelfit(alg,dtrain,predictors,target,cv_folds=5,early_stopping_rounds=50):
+	xgb_param = alg.get_xgb_params()
+	xgtrain = xgb.DMatrix(dtrain[predictors].values, label=dtrain[target].values)
+	cvresult = xgb.cv(xgb_param, xgtrain, num_boost_round=alg.get_params()['n_estimators'],
+		nfold=cv_folds,metrics='auc', early_stopping_rounds=early_stopping_rounds,verbose_eval=True)
+	alg.set_params(n_estimators=cvresult.shape[0])
+	alg.fit(dtrain[predictors], dtrain[target],eval_metric='auc')

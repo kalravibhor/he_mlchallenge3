@@ -94,3 +94,23 @@ df['timeofday'] = df['datetime'].dt.time
 df.loc[df['browserid'].isin(['IE','Internet Explorer']),'browserid'] = 'InternetExplorer'
 df.loc[df['browserid']=='Mozilla Firefox','browserid'] = 'Firefox'
 df.loc[df['browserid']=='Google Chrome','browserid'] = 'Chrome'
+
+train.isnull().sum(axis=0)/train.shape[0]
+# ID             0.000000
+# datetime       0.000000
+# siteid         0.099896
+# offerid        0.000000
+# category       0.000000
+# merchant       0.000000
+# countrycode    0.000000
+# browserid      0.050118
+# devid          0.149969
+# click          0.000000
+
+# xgb_mod = xgb_csf.fit(train[predictors],train[target],eval_metric='auc')
+# test_predictions = xgb_mod.predict(test[predictors])
+# test_predprob = xgb_mod.predict_proba(test[predictors])[:,1]
+# print "Accuracy : %.4g" % accuracy_score(test[target].values,test_predictions)
+# print "AUC Score : %f" % roc_auc_score(test[target],test_predprob)
+# xgb_csf = XGBClassifier(learning_rate =0.1,n_estimators=1000,max_depth=5,min_child_weight=1,gamma=0,subsample=0.8,silent=False,
+# 						colsample_bytree=0.8,objective= 'binary:logistic',nthread=4,scale_pos_weight=1,seed=138727)
