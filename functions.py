@@ -42,7 +42,7 @@ def leave_oneout_enc_test(df_test,df_train,colnames,target):
 def data_prep(df):
 	df['devid'] = df['devid'].fillna('')
 	df['browserid'] = df['browserid'].fillna('')
-	df['siteid'] = df['devid'].fillna(0)
+	df['siteid'] = df['siteid'].fillna(0)
 	df.loc[df['browserid'].isin(['IE','Internet Explorer']),'browserid'] = 'InternetExplorer'
 	df.loc[df['browserid'].isin(['Mozilla','Mozilla Firefox']),'browserid'] = 'Firefox'
 	df.loc[df['browserid']=='Google Chrome','browserid'] = 'Chrome'

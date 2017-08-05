@@ -14,7 +14,7 @@ looecols = ['category','merchant']
 target = 'click'
 
 random.seed(138727)
-data = pd.read_csv("./Data/train.csv")
+data = pd.read_csv("~/Data/train.csv")
 train, test = train_test_split(data,test_size=0.2,random_state=131,stratify=data[target])
 
 train = data_prep(train)

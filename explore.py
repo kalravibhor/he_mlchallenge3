@@ -96,6 +96,30 @@ df.loc[df['browserid']=='Mozilla Firefox','browserid'] = 'Firefox'
 df.loc[df['browserid']=='Google Chrome','browserid'] = 'Chrome'
 
 train.isnull().sum(axis=0)/train.shape[0]
+
+import Density_Sampling
+sampled_indices = Density_Sampling.density_sampling(data[predictors+['click']],metric='euclidean',desired_samples=int(data.shape[0]/2))
+data_reduced = data[sampled_indices, :]
+
+data.isnull().any()
+
+site_offer_count = train.groupby(['siteid','offerid']).size().reset_index()
+site_offer_count.columns = ['siteid','offerid','site_offer_count']
+
+site_offer_count_test = test.groupby(['siteid','offerid']).size().reset_index()
+site_offer_count_test.columns = ['siteid','offerid','site_offer_count']
+
+site_cat_count = train.groupby(['siteid','category']).size().reset_index()
+site_cat_count.columns = ['siteid','category','site_cat_count']
+
+site_cat_count_test = test.groupby(['siteid','category']).size().reset_index()
+site_cat_count_test.columns = ['siteid','category','site_cat_count']
+
+site_mcht_count = train.groupby(['siteid','merchant']).size().reset_index()
+site_mcht_count.columns = ['siteid','merchant','site_mcht_count']
+
+site_mcht_count_test = test.groupby(['siteid','merchant']).size().reset_index()
+site_mcht_count_test.columns = ['siteid','merchant','site_mcht_count']
 # ID             0.000000
 # datetime       0.000000
 # siteid         0.099896
