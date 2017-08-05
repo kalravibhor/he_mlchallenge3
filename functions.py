@@ -11,31 +11,29 @@ def one_hot(df,cols):
 	return df
 
 # Leave one out encoding for categorical variables with high cardinality (train)
-def leave_oneout_enc_train(df,colnames,target):
+def leave_oneout_enc_train(df,colnames,target,countval):
 	for colname in colnames:
 		noise_mean = 0
 		noise_std = np.std(df[target])
-		cfq = pd.crosstab(index=df[colname],columns='cc_' + colname)
-		srr = pd.pivot_table(df,values=target,index=[colname],aggfunc=np.sum)
-		srr.columns = ['sum_rr']
-		df = df.set_index(colname)
-		df = df.merge(cfq.merge(srr,how='left',left_index=True,right_index=True),how='left',left_index=True,right_index=True)
-		df['looe_' + colname] = (df['sum_rr'] - df[target])/(df['cc_' + colname] - 1) + (np.random.normal(loc=noise_mean,scale=noise_std,size=(df.shape[0]))/100).tolist()
-		df = df.drop(['sum_rr'],axis=1)
-		df = df.reset_index()
+		table = pd.pivot_table(df,values=countval,index=[colname],columns=target,aggfunc='count',margins=True)
+		table = table.reset_index()
+		table.columns = [colname,'sum_nrr','sum_prr','cc_' + colname]
+		df = df.merge(table)
+		df['looe_' + colname] = (df['sum_prr'] - df[target])/(df['cc_' + colname] - 1) + (np.random.normal(loc=noise_mean,scale=noise_std,size=(df.shape[0]))/100).tolist()
+		df = df.drop(['sum_nrr','sum_prr'],axis=1)
+		df['looe_' + colname] = df['looe_' + colname].fillna(0)
 	return df
 
 # Leave one out encoding for categorical variables with high cardinality (test)
-def leave_oneout_enc_test(df_test,df_train,colnames,target):
+def leave_oneout_enc_test(df_test,df_train,colnames,target,countval):
 	for colname in colnames:
-		cfq = pd.crosstab(index=df_train[colname],columns='cc_' + colname)
-		srr = pd.pivot_table(df_train,values=target,index=[colname],aggfunc=np.sum)
-		srr.columns = ['sum_rr']
-		df_test = df_test.set_index(colname)
-		df_test = df_test.merge(cfq.merge(srr,how='left',left_index=True,right_index=True),how='left',left_index=True,right_index=True)
-		df_test['looe_' + colname] = (df_test['sum_rr']/df_test['cc_' + colname])
-		df_test = df_test.drop(['sum_rr'],axis=1)
-		df_test = df_test.reset_index()
+		table = pd.pivot_table(df_train,values=countval,index=[colname],columns=target,aggfunc='count',margins=True)
+		table = table.reset_index()
+		table.columns = [colname,'sum_nrr','sum_prr','cc_' + colname]
+		df_test = df_test.merge(table)
+		df_test['looe_' + colname] = (df_test['sum_prr']/df_test['cc_' + colname])
+		df_test = df_test.drop(['sum_prr','sum_nrr'],axis=1)
+		df_test['looe_' + colname] = df_test['looe_' + colname].fillna(0)
 	return df_test
 
 # Data pre-processing
@@ -43,14 +41,27 @@ def data_prep(df):
 	df['devid'] = df['devid'].fillna('')
 	df['browserid'] = df['browserid'].fillna('')
 	df['siteid'] = df['siteid'].fillna(0)
+	
 	df.loc[df['browserid'].isin(['IE','Internet Explorer']),'browserid'] = 'InternetExplorer'
 	df.loc[df['browserid'].isin(['Mozilla','Mozilla Firefox']),'browserid'] = 'Firefox'
 	df.loc[df['browserid']=='Google Chrome','browserid'] = 'Chrome'
+	
 	df['datetime'] =  pd.to_datetime(df['datetime'])
 	df['dayofthweek'] = df['datetime'].dt.dayofweek
 	df['timeofday'] = df['datetime'].dt.time
 	df['timeofday'] = df['timeofday'].astype('str')
 	df['timeofday'] = df['timeofday'].apply(lambda x: (int(x.split(':')[0])*3600) + (int(x.split(':')[1])*60) + (int(x.split(':')[2])))
+	
+	countval = 'ID'
+	target = 'click'
+	bivt_cols = ['siteid','category','merchant','countrycode','offerid']
+	for col1 in bivt_cols:
+		for col2 in bivt_cols:
+			if ((col1 != col2) & (col1 + '_' + col2 not in df.columns) & (col2 + '_' + col1 not in df.columns)):
+				table = pd.pivot_table(df,values=countval,index=[col1,col2],aggfunc='count')
+				table = table.reset_index()
+				table.columns = [col1,col2,col1 + '_' + col2]
+				df = df.merge(table,how='left')
 	return df
 
 # Response distribution for categorical variables

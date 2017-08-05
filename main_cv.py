@@ -14,14 +14,13 @@ cdcols = ['devid','browserid','countrycode']
 looecols = ['category','merchant']
 target = 'click'
 
-data = pd.read_csv("~/Data/train.csv")
-data = data.head(50000)
+data = pd.read_csv("~/HE ML3/Data/train.csv")
+trainc, testc = train_test_split(data,test_size=0.6,random_state=131,stratify=data[target])
 
 train_cvall = list()
 cvfold_error = list()
 cvfold_estop = list()
 
-trainc = data
 for i in [5,4,3,2]:
 	trainc, ltrain = train_test_split(trainc,test_size=(1/float(i)),random_state=11,stratify=trainc[target])
 	train_cvall.append(ltrain)
@@ -41,18 +40,19 @@ for i in range(5):
 	test = leave_oneout_enc_test(test,train,looecols,target)
 	predictors = [x for x in train.columns if x not in 
 	['ID','datetime','siteid','offerid','category','merchant','countrycode','browserid','devid','click']]
-	params = {'learning_rate':0.1,'n_estimators':1000,'max_depth':5,'min_child_weight':1,'gamma':0,'subsample':0.8,'silent':False,
-						'colsample_bytree':0.8,'objective':'binary:logistic','nthread':4,'scale_pos_weight':1}
+	norm_var = ['siteid_category','siteid_merchant','siteid_countrycode','siteid_offerid','category_merchant','category_countrycode',
+			'category_offerid','merchant_countrycode','merchant_offerid','countrycode_offerid','cc_merchant','cc_category',
+			'cc_siteid','cc_offerid']
+	scaler = MinMaxScaler()
+	train[norm_var] = scaler.fit_transform(train[norm_var])
+	params = {'learning_rate':0.1,'n_estimators':1000,'max_depth':4,'min_child_weight':1,'gamma':0,'subsample':0.8,'silent':False,
+						'colsample_bytree':0.8,'objective':'binary:logistic','nthread':16,'scale_pos_weight':1}
 	dtrain = xgb.DMatrix(data=train[predictors].values,label=train[target].values)
 	dverify = xgb.DMatrix(data=test[predictors].values,label=test[target].values)
 	evallist = [(dverify,'CrossValidation')]
 	traineval = {}
 	xgb_mod = xgb.train(params,dtrain,num_boost_round=1000,evals=evallist,early_stopping_rounds=50,evals_result=traineval,verbose_eval=True)
 	cvfold_error.append(traineval['CrossValidation']['error'])
-	try:
-		cvfold_estop.append([xgb_mod.best_score,xgb_mod.best_iteration,xgb_mod.best_ntree_limit])
-	except:
-		cvfold_estop.append([])
 	
 cv_error_auc = pd.DataFrame(cvfold_error)
 cv_error_auc = cv_error_auc.transpose()

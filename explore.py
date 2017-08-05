@@ -106,7 +106,7 @@ data.isnull().any()
 site_offer_count = train.groupby(['siteid','offerid']).size().reset_index()
 site_offer_count.columns = ['siteid','offerid','site_offer_count']
 
-site_offer_count_test = test.groupby(['siteid','offerid']).size().reset_index()
+site_offer_count_test = df.groupby(['siteid','category'])
 site_offer_count_test.columns = ['siteid','offerid','site_offer_count']
 
 site_cat_count = train.groupby(['siteid','category']).size().reset_index()
@@ -120,6 +120,17 @@ site_mcht_count.columns = ['siteid','merchant','site_mcht_count']
 
 site_mcht_count_test = test.groupby(['siteid','merchant']).size().reset_index()
 site_mcht_count_test.columns = ['siteid','merchant','site_mcht_count']
+
+# Bi-Variate Analysis
+col1 = 'siteid'
+col2 = 'category'
+target = 'click'
+countval = 'ID'
+table = pd.pivot_table(df,values=countval,index=[col1,col2],columns=[target],aggfunc='count',margins=True)
+table = table.reset_index()
+table.columns = [col1,col2,'negative','positive','all']
+table['positive_response_rate'] = table['positive']/table['all']
+
 # ID             0.000000
 # datetime       0.000000
 # siteid         0.099896

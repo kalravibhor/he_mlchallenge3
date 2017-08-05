@@ -7,15 +7,16 @@ from xgboost import XGBClassifier
 import xgboost as xgb
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score,roc_auc_score
+from sklearn.preprocessing import normalize
 from functions import data_prep,one_hot,leave_oneout_enc_train,leave_oneout_enc_test,modelfit
 
 cdcols = ['devid','browserid','countrycode']
-looecols = ['category','merchant']
+looecols = ['category','merchant','siteid','offerid']
 target = 'click'
 
 random.seed(138727)
-data = pd.read_csv("~/Data/train.csv")
-train, test = train_test_split(data,test_size=0.2,random_state=131,stratify=data[target])
+data = pd.read_csv("~/Desktop/HE ML3/Data/train.csv")
+train, test = train_test_split(data,test_size=0.7,random_state=131,stratify=data[target])
 
 train = data_prep(train)
 test = data_prep(test)
